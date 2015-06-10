@@ -256,7 +256,7 @@ function isKnownCollection(name: string, exports: any): boolean {
     return KNOWNCOLLECTIONS in exports && exports[KNOWNCOLLECTIONS] && name in exports[KNOWNCOLLECTIONS];
 }
 
-function addToComplexProperty(parent: componentBuilder.ComponentModule, complexProperty, elementModule: componentBuilder.ComponentModule) {
+function addToComplexProperty(parent: componentBuilder.ComponentModule, complexProperty: ComplexProperty, elementModule: componentBuilder.ComponentModule) {
     // If property name is known collection we populate array with elements.
     var parentComponent = <any>parent.component;
     if (isKnownCollection(complexProperty.name, parent.exports)) {
