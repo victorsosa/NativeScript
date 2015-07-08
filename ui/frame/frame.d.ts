@@ -184,17 +184,17 @@ declare module "ui/frame" {
         /**
          * Gets the native [android Activity](http://developer.android.com/reference/android/app/Activity.html) instance associated with this Frame. In case of nested Frame objects, this property points to the activity of the root Frame.
          */
-        activity: android.app.Activity;
+        activity: android.support.v7.app.AppCompatActivity;
 
         /**
          * Gets the current (foreground) activity for the application. This property will recursively traverse all existing Frame objects and check for own Activity property.
          */
-        currentActivity: android.app.Activity;
+        currentActivity: android.support.v7.app.AppCompatActivity;
 
         /**
          * Gets the actionBar property of the currentActivity.
          */
-        actionBar: android.app.ActionBar;
+        actionBar: android.support.v7.app.ActionBar;
 
         /**
          * A function called by the Runtime whenever a new Activity is about to be opened.

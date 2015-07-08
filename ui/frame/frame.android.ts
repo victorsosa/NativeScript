@@ -504,7 +504,7 @@ class AndroidFrame extends observable.Observable implements definition.AndroidFr
     public showActionBar = false;
     public frameId;
 
-    private _activity: android.app.Activity;
+    private _activity: android.support.v7.app.AppCompatActivity;
     private _owner: Frame;
     private _cachePagesOnNavigate: boolean;
 
@@ -515,7 +515,7 @@ class AndroidFrame extends observable.Observable implements definition.AndroidFr
         framesCache.push(new WeakRef(this));
     }
 
-    public get activity(): android.app.Activity {
+    public get activity(): android.support.v7.app.AppCompatActivity {
         if (this._activity) {
             return this._activity;
         }
@@ -533,13 +533,13 @@ class AndroidFrame extends observable.Observable implements definition.AndroidFr
         return undefined;
     }
 
-    public get actionBar(): android.app.ActionBar {
+    public get actionBar(): android.support.v7.app.ActionBar {
         var activity = this.currentActivity;
         if (!activity) {
             return undefined;
         }
 
-        var bar = activity.getActionBar();
+        var bar = activity.getSupportActionBar();
         if (!bar) {
             return undefined;
         }
@@ -547,7 +547,7 @@ class AndroidFrame extends observable.Observable implements definition.AndroidFr
         return bar;
     }
 
-    public get currentActivity(): android.app.Activity {
+    public get currentActivity(): android.support.v7.app.AppCompatActivity {
         var activity = this.activity;
         if (activity) {
             return activity;
@@ -613,7 +613,7 @@ class AndroidFrame extends observable.Observable implements definition.AndroidFr
         this.rootViewGroup = undefined;
     }
 
-    public setActivity(value: android.app.Activity) {
+    public setActivity(value: android.support.v7.app.AppCompatActivity) {
         this._activity = value;
     }
 

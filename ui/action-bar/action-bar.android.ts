@@ -29,7 +29,7 @@ export class ActionBar extends common.ActionBar {
         }
     }
 
-    public _onAndroidItemSelected(itemId: number): boolean{
+    public _onAndroidItemSelected(itemId: number): boolean {
         var menuItem = this.actionItems.getItemAt(itemId - ACTION_ITEM_ID_OFFSET);
         if (menuItem) {
             menuItem._raiseTap();
@@ -46,7 +46,7 @@ export class ActionBar extends common.ActionBar {
     }
 
     public _updateAndroidActionBar(menu: android.view.IMenu) {
-        var actionBar: android.app.ActionBar = frame.topmost().android.actionBar;
+        var actionBar: android.support.v7.app.ActionBar = frame.topmost().android.actionBar;
 
         this._addActionItems(menu);
 
@@ -61,39 +61,12 @@ export class ActionBar extends common.ActionBar {
 
     }
 
-    public _updateNavigationButton(actionBar: android.app.ActionBar) {
+    public _updateNavigationButton(actionBar: android.support.v7.app.ActionBar) {
         var navButton = this.navigationButton;
         if (navButton) {
-            // No API to set the icon in pre-lvl 18 
-            if (API_LVL >= 18) {
-                try {
-                    // TODO: Find a better way to set the icon instead of using reflection
-                    var drawableOrId = getDrawableOrResourceId(navButton.icon, this._appResources);
-                    if (!drawableOrId) {
-                        drawableOrId = 0;
-                    }
-
-                    var arr, arr2, method;
-                    if (types.isNumber(drawableOrId)) {
-                        arr[0] = java.lang.Integer.TYPE;
-                        method = actionBar.getClass().getMethod("setHomeAsUpIndicator", arr);
-
-                        arr2 = java.lang.reflect.Array.newInstance(java.lang.Object.class, 1);
-                        arr2[0] = new java.lang.Integer(drawableOrId);
-                        method.invoke(actionBar, arr2);
-                    } else {
-                        arr = java.lang.reflect.Array.newInstance(java.lang.Class.class, 1);
-                        arr[0] = android.graphics.drawable.Drawable.class;
-                        method = actionBar.getClass().getMethod("setHomeAsUpIndicator", arr);
-
-                        arr2 = java.lang.reflect.Array.newInstance(java.lang.Object.class, 1);
-                        arr2[0] = drawableOrId;
-                        method.invoke(actionBar, arr2);
-                    }
-                }
-                catch (e) {
-                    trace.write("Failed to set navigation icon: " + e, trace.categories.Error, trace.messageType.error);
-                }
+            var drawableOrId = getDrawableOrResourceId(navButton.icon, this._appResources);
+            if (drawableOrId) {
+                actionBar.setHomeAsUpIndicator(drawableOrId);
             }
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
@@ -102,7 +75,7 @@ export class ActionBar extends common.ActionBar {
         }
     }
 
-    public _updateIcon(actionBar: android.app.ActionBar) {
+    public _updateIcon(actionBar: android.support.v7.app.ActionBar) {
         var icon = this.icon;
         if (types.isDefined(icon)) {
             var drawableOrId = getDrawableOrResourceId(icon, this._appResources);
@@ -124,7 +97,7 @@ export class ActionBar extends common.ActionBar {
         actionBar.setDisplayShowHomeEnabled(visibility);
     }
 
-    public _updateTitle(actionBar: android.app.ActionBar) {
+    public _updateTitle(actionBar: android.support.v7.app.ActionBar) {
         var title = this.title;
         if (types.isDefined(title)) {
             actionBar.setTitle(title);
@@ -163,7 +136,7 @@ export class ActionBar extends common.ActionBar {
         if (frame.topmost().currentPage === this.page) {
             this._updateIcon(frame.topmost().android.actionBar);
         }
-    } 
+    }
 }
 
 function getDrawableOrResourceId(icon: string, resources: android.content.res.Resources): any {
