@@ -242,7 +242,7 @@ export class Frame extends CustomLayoutView implements definition.Frame {
     }
 
     public _updateActionBar(page?: Page) {
-        trace.write("calling _updateActionBar on Frame", trace.categories.Navigation);
+        //trace.write("calling _updateActionBar on Frame", trace.categories.Navigation);
     }
 
     private _processNavigationContext(navigationContext: NavigationContext) {

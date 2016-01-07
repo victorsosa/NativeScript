@@ -2,6 +2,6 @@
     import pagesModule = require("ui/page");
 
     class NavPage extends pagesModule.Page {
-        constructor(id: number);
+        constructor(index: number);
     }
 } 

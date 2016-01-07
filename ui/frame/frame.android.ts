@@ -6,6 +6,8 @@ import observable = require("data/observable");
 import application = require("application");
 import * as typesModule from "utils/types";
 import * as utilsModule from "utils/utils";
+import platform = require("platform");
+import animation = require("ui/animation");
 
 global.moduleMerge(frameCommon, exports);
 
@@ -17,9 +19,12 @@ var ANDROID_FRAME = "android_frame";
 var BACKSTACK_TAG = "_backstackTag";
 var NAV_DEPTH = "_navDepth";
 var CLEARING_HISTORY = "_clearingHistory";
+var EXIT_ANIMATION = "_exitAnimation";
 var activityInitialized = false;
 
 var navDepth = -1;
+
+var floatType = java.lang.Float.class.getField("TYPE").get(null);
 
 var PageFragmentBody = (<any>android.app.Fragment).extend({
         
@@ -75,6 +80,97 @@ var PageFragmentBody = (<any>android.app.Fragment).extend({
         var utils: typeof utilsModule = require("utils/utils");
 
         utils.GC();
+    },    
+    
+    onCreateAnimator: function (transit: number, enter: boolean, nextAnim: number): android.animation.Animator {
+        var nativeAnimatorsArray = java.lang.reflect.Array.newInstance(android.animation.Animator.class, 2);
+        
+        // TranslateX
+        var translationXValues = java.lang.reflect.Array.newInstance(floatType, 2);
+        var screenWidth = platform.screen.mainScreen.widthPixels;
+        switch (nextAnim) {
+            case -10: // Enter
+                translationXValues[0] = screenWidth;
+                translationXValues[1] = 0;
+                break;
+            case -20: // Exit
+                translationXValues[0] = 0;
+                translationXValues[1] = -screenWidth;
+                break;
+            case -30: // Pop Enter
+                translationXValues[0] = -screenWidth;
+                translationXValues[1] = 0;
+                break;
+            case -40: // Pop Exit
+                translationXValues[0] = 0;
+                translationXValues[1] = screenWidth;
+                break;
+            default:
+                throw new Error("Invalid transition animation ID.");
+        }
+        var translateXAnimator = android.animation.ObjectAnimator.ofFloat(this, "translationX", translationXValues);
+        translateXAnimator.setDuration(5000);//5 seconds
+        translateXAnimator.setInterpolator(new android.view.animation.DecelerateInterpolator(1.5));
+        nativeAnimatorsArray[0] = translateXAnimator;
+
+        // Alpha
+        var alphaValues = java.lang.reflect.Array.newInstance(floatType, 2);
+        switch (nextAnim) {
+            case -10: // Enter
+                alphaValues[0] = 0;
+                alphaValues[1] = 1;
+                break;
+            case -20: // Exit
+                alphaValues[0] = 1;
+                alphaValues[1] = 0;
+                break;
+            case -30: // Pop Enter
+                alphaValues[0] = 0;
+                alphaValues[1] = 1;
+                break;
+            case -40: // Pop Exit
+                alphaValues[0] = 1;
+                alphaValues[1] = 0;
+                break;
+            default:
+                throw new Error("Invalid transition animation ID.");
+        }
+        var alphaAnimator = android.animation.ObjectAnimator.ofFloat(this, "alpha", alphaValues);
+        alphaAnimator.setDuration(5000);//5 seconds
+        alphaAnimator.setInterpolator(new android.view.animation.DecelerateInterpolator(1.5));
+        nativeAnimatorsArray[1] = alphaAnimator;
+
+        var page = (<definition.BackstackEntry>this.entry).resolvedPage;
+        var listener = new android.animation.Animator.AnimatorListener({
+            onAnimationStart: function (animator: android.animation.Animator): void {
+                trace.write(`${this.toString()} transitionAnimatorListener.onAnimationStart(${animator})`, trace.categories.Animation);
+            },
+            onAnimationRepeat: function (animator: android.animation.Animator): void {
+                trace.write(`${this.toString()} transitionAnimatorListener.onAnimationRepeat(${animator})`, trace.categories.Animation);
+            },
+            onAnimationEnd: function (animator: android.animation.Animator): void {
+                trace.write(`${this.toString()} transitionAnimatorListener.onAnimationEnd(${animator})`, trace.categories.Animation);
+                if (nextAnim === -20 || nextAnim === -40) {
+                    if (page && page.frame) {
+                        trace.write(`${this.toString()} exit animation finished, removing ${page} from visual tree.`, trace.categories.NativeLifecycle);
+                        page.frame._removeView(page);
+                    }
+                }
+                animatorSet.removeAllListeners();
+                listener = undefined;
+            },
+            onAnimationCancel: function (animator: android.animation.Animator): void {
+                trace.write(`${this.toString()} transitionAnimatorListener.onAnimationCancel(${animator})`, trace.categories.Animation);
+            }
+        });
+
+        var animatorSet = new android.animation.AnimatorSet();
+        animatorSet.addListener(listener);
+        animatorSet.playTogether(nativeAnimatorsArray);
+        animatorSet.setupStartValues();
+
+        trace.write(`PageFragmentBody.onCreateAnimator(${transit}, ${enter}, ${nextAnim}): ${animatorSet}`, trace.categories.NativeLifecycle);
+        return animatorSet;
     }
 });
 
@@ -104,7 +200,9 @@ function onFragmentShown(fragment) {
 
     frame._currentEntry = entry;
 
+    trace.write(`${fragment.toString() } has been shown, adding ${page} to visual tree.`, trace.categories.NativeLifecycle);
     frame._addView(page);
+    
     // onFragmentShown is called before NativeActivity.start where we call frame.onLoaded
     // We need to call frame.onLoaded() here so that the call to frame._addView(page) will emit the page.loaded event
     // before the page.navigatedTo event making the two platforms identical.
@@ -119,15 +217,19 @@ function onFragmentHidden(fragment) {
     trace.write(`onFragmentHidden(${fragment.toString()})`, trace.categories.NativeLifecycle);
     if (fragment[CLEARING_HISTORY]) {
         trace.write(`${fragment.toString() } has been hidden, but we are currently clearing history. Returning.`, trace.categories.NativeLifecycle);
-        return null;
+        return;
     }
 
-    var entry: definition.BackstackEntry = fragment.entry;
-    var page: pages.Page = entry.resolvedPage;
-    // This might be a second call if the fragment is hidden and then destroyed.
+    var page = (<definition.BackstackEntry>fragment.entry).resolvedPage;
+    if (fragment[EXIT_ANIMATION]) {
+        trace.write(`${fragment.toString() } has been hidden, but there is exit animation to be played. Returning.`, trace.categories.NativeLifecycle);
+        return;
+    }
+
     if (page && page.frame) {
-        var frame = page.frame;
-        frame._removeView(page);
+    // This might be a second call if the fragment is hidden and then destroyed.
+        trace.write(`${fragment.toString()} has been hidden, removing ${page} from visual tree.`, trace.categories.NativeLifecycle);
+        page.frame._removeView(page);
     }
 }
 
@@ -213,9 +315,11 @@ export class Frame extends frameCommon.Frame {
         navDepth++;
 
         var fragmentTransaction = manager.beginTransaction();
+        fragmentTransaction.setCustomAnimations(-10, -20, -30, -40);
 
         var newFragmentTag = "fragment" + navDepth;
         var newFragment = new PageFragmentBody();
+        newFragment[EXIT_ANIMATION] = true;
 
         newFragment.frame = this;
         newFragment.entry = backstackEntry;

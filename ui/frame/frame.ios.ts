@@ -7,6 +7,7 @@ import utils = require("utils/utils");
 import view = require("ui/core/view");
 import uiUtils = require("ui/utils");
 import * as typesModule from "utils/types";
+import platform = require("platform");
 
 global.moduleMerge(frameCommon, exports);
 
@@ -69,8 +70,7 @@ export class Frame extends frameCommon.Frame {
 
         // First navigation.
         if (!this._currentEntry) {
-            this._ios.controller.pushViewControllerAnimated(viewController, animated);
-            trace.write("Frame<" + this._domId + ">.pushViewControllerAnimated(newController) depth = " + navDepth, trace.categories.Navigation);
+            this._pushViewControllerAnimated(viewController, animated);
             return;
         }
 
@@ -79,10 +79,8 @@ export class Frame extends frameCommon.Frame {
             viewController.navigationItem.hidesBackButton = true;
             var newControllers = NSMutableArray.alloc().initWithCapacity(1);
             newControllers.addObject(viewController);
-            this._ios.controller.setViewControllersAnimated(newControllers, animated);
-            trace.write("Frame<" + this._domId + ">.setViewControllersAnimated([newController]) depth = " + navDepth, trace.categories.Navigation);
+            this._setViewControllersAnimated(newControllers, animated);
             return;
-
         }
 
         // We should hide the current entry from the back stack.
@@ -101,25 +99,33 @@ export class Frame extends frameCommon.Frame {
             newControllers.addObject(viewController);
 
             // replace the controllers instead of pushing directly
-            this._ios.controller.setViewControllersAnimated(newControllers, animated);
-            trace.write("Frame<" + this._domId + ">.setViewControllersAnimated([originalControllers - lastController + newController]) depth = " + navDepth, trace.categories.Navigation);
+            this._setViewControllersAnimated(newControllers, animated);
             return;
         }
 
         // General case.
+        this._pushViewControllerAnimated(viewController, animated);
+    }
+
+    private _pushViewControllerAnimated(viewController: UIViewController, animated: boolean) {
+        trace.write(`${this._ios.controller}.pushViewControllerAnimated(${viewController}, ${animated}); navDepth: ${navDepth}`, trace.categories.Navigation);
         this._ios.controller.pushViewControllerAnimated(viewController, animated);
-        trace.write("Frame<" + this._domId + ">.pushViewControllerAnimated(newController) depth = " + navDepth, trace.categories.Navigation);
+    }
+
+    private _setViewControllersAnimated(newControllers: NSArray, animated: boolean) {
+        trace.write(`${this._ios.controller}.setViewControllersAnimated(${newControllers}, ${animated}); navDepth: ${navDepth}`, trace.categories.Navigation);
+        this._ios.controller.setViewControllersAnimated(newControllers, animated);
     }
 
     public _goBackCore(backstackEntry: definition.BackstackEntry) {
         navDepth = backstackEntry[NAV_DEPTH];
-        trace.write("Frame<" + this._domId + ">.popViewControllerAnimated depth = " + navDepth, trace.categories.Navigation);
 
         if (!this._shouldSkipNativePop) {
             var controller = backstackEntry.resolvedPage.ios;
             var animated = this._getIsAnimatedNavigation(backstackEntry.entry);
 
             this._updateActionBar(backstackEntry.resolvedPage);
+            trace.write(`${this._ios.controller}.popToViewControllerAnimated(${controller}, ${animated}); navDepth: ${navDepth}`, trace.categories.Navigation);
             this._ios.controller.popToViewControllerAnimated(controller, animated);
         }
     }
@@ -267,6 +273,78 @@ export class Frame extends frameCommon.Frame {
     }
 }
 
+class TransitionAnimator extends NSObject implements UIViewControllerAnimatedTransitioning {
+    public static ObjCProtocols = [UIViewControllerAnimatedTransitioning];
+
+    private _navigationController: UINavigationController;
+    private _operation: number;
+    private _fromVC: UIViewController;
+    private _toVC: UIViewController
+
+    public static init(navigationController: UINavigationController, operation: number, fromVC: UIViewController, toVC: UIViewController): TransitionAnimator {
+        var operationType: string;
+        trace.write(`TransitionAnimator.init(${navigationController}, ${operationType}, ${fromVC}, ${toVC})`, trace.categories.NativeLifecycle);
+        var impl = <TransitionAnimator>TransitionAnimator.new();
+        impl._navigationController = navigationController;
+        impl._operation = operation;
+        impl._fromVC = fromVC;
+        impl._toVC = toVC;
+        return impl;
+}
+
+    public animateTransition(transitionContext: UIViewControllerContextTransitioning): void {
+        trace.write(`TransitionAnimator.animateTransition(${transitionContext})`, trace.categories.NativeLifecycle);
+
+        var containerView = (<any>transitionContext).performSelector("containerView");
+        var fromView = this._fromVC.view;
+        var toView = this._toVC.view;
+
+        fromView.alpha = 1.0;
+        toView.alpha = 0.0;
+        var screenWidth = platform.screen.mainScreen.widthDIPs;
+        switch (this._operation) {
+            case UINavigationControllerOperation.UINavigationControllerOperationPush:
+                fromView.transform = CGAffineTransformIdentity;
+                toView.transform = CGAffineTransformMakeTranslation(screenWidth, 0);
+                containerView.insertSubviewAboveSubview(toView, fromView);
+                break;
+            case UINavigationControllerOperation.UINavigationControllerOperationPop:
+                fromView.transform = CGAffineTransformIdentity;
+                toView.transform = CGAffineTransformMakeTranslation(-screenWidth, 0);
+                containerView.insertSubviewBelowSubview(toView, fromView);
+                break;
+        }
+
+        var duration = this.transitionDuration(transitionContext);
+        UIView.animateWithDurationAnimationsCompletion(duration,
+            () => {
+                UIView.setAnimationCurve(UIViewAnimationCurve.UIViewAnimationCurveEaseOut);
+                
+                this._fromVC.view.alpha = 0.0;
+                this._toVC.view.alpha = 1.0;
+
+                switch (this._operation) {
+                    case UINavigationControllerOperation.UINavigationControllerOperationPush:
+                        fromView.transform = CGAffineTransformMakeTranslation(-screenWidth, 0);
+                        toView.transform = CGAffineTransformIdentity;
+                        break;
+                    case UINavigationControllerOperation.UINavigationControllerOperationPop:
+                        fromView.transform = CGAffineTransformMakeTranslation(screenWidth, 0);
+                        toView.transform = CGAffineTransformIdentity;
+                        break;
+                }
+            },
+            () => {
+                (<any>transitionContext).performSelectorWithObject("completeTransition:", true);
+            }
+        ); 
+    }
+
+    public transitionDuration(transitionContext: UIViewControllerContextTransitioning): number {
+        return 5;//seconds
+    }
+}
+
 class UINavigationControllerImpl extends UINavigationController implements UINavigationControllerDelegate {
     public static ObjCProtocols = [UINavigationControllerDelegate];
 
@@ -391,8 +469,17 @@ class UINavigationControllerImpl extends UINavigationController implements UINav
         frame._processNavigationQueue(newPage);
     }
 
-    public supportedInterfaceOrientation(): number {
+    public navigationControllerSupportedInterfaceOrientations(): number {
         return UIInterfaceOrientationMask.UIInterfaceOrientationMaskAll;
+    }
+
+    public navigationControllerAnimationControllerForOperationFromViewControllerToViewController(navigationController: UINavigationController, operation: number, fromVC: UIViewController, toVC: UIViewController): any {
+        var transitionAnimator: TransitionAnimator;
+        if (operation !== UINavigationControllerOperation.UINavigationControllerOperationNone) {
+            transitionAnimator = TransitionAnimator.init(navigationController, operation, fromVC, toVC);
+        }
+        trace.write(`UINavigationControllerImpl.navigationControllerAnimationControllerForOperationFromViewControllerToViewController(${operation}, ${fromVC}, ${toVC}): ${transitionAnimator})`, trace.categories.NativeLifecycle);
+        return transitionAnimator;
     }
 }
 

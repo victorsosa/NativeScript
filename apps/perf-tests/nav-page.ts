@@ -7,12 +7,15 @@ import buttonModule = require("ui/button");
 import textFieldModule = require("ui/text-field");
 import enums = require("ui/enums");
 import switchModule = require("ui/switch");
+import color = require("color");
 
 export class NavPage extends pagesModule.Page implements definition.ControlsPage {
-    constructor(id: number) {
+    constructor(index: number) {
         super();
 
-        this.id = "NavPage " + id;
+        this.id = "NavPage" + index;
+        var bg = new color.Color(255, Math.round(Math.random() * 255), Math.round(Math.random() * 255), Math.round(Math.random() * 255));
+        this.style.backgroundColor = bg;
 
         var stackLayout = new stackLayoutModule.StackLayout();
         stackLayout.orientation = enums.Orientation.vertical;
@@ -30,7 +33,7 @@ export class NavPage extends pagesModule.Page implements definition.ControlsPage
         });
 
         var stateLabel = new labelModule.Label();
-        stateLabel.text = "NavPage " + id;
+        stateLabel.text = `${this.id} (${(<any>bg)._hex})`;
         stackLayout.addChild(stateLabel);
 
         var textField = new textFieldModule.TextField();
@@ -71,7 +74,7 @@ export class NavPage extends pagesModule.Page implements definition.ControlsPage
         forwardButton.text = "->";
         forwardButton.on(buttonModule.Button.tapEvent, function () {
             var pageFactory = function () {
-                return new NavPage(id + 1);
+                return new NavPage(index + 1);
             };
             frameModule.topmost().navigate({
                 create: pageFactory,

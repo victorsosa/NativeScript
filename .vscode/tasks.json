@@ -1,0 +1,18 @@
+{
+    "version": "0.1.0",
+    "command": "grunt",
+    "isShellCommand": true,
+    "tasks": [
+        {
+            "taskName": "update-external-app",
+            "args": ["--path", "//hristovmac/hristov/github/transitions"],
+            "isBuildCommand": true,
+            "isWatching": false,
+            "problemMatcher": [
+                "$lessCompile",
+                "$tsc",
+                "$jshint"
+            ]
+        }
+    ]
+}
