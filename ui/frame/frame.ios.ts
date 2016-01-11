@@ -283,7 +283,7 @@ class TransitionAnimator extends NSObject implements UIViewControllerAnimatedTra
 
     public static init(navigationController: UINavigationController, operation: number, fromVC: UIViewController, toVC: UIViewController): TransitionAnimator {
         var operationType: string;
-        trace.write(`TransitionAnimator.init(${navigationController}, ${operationType}, ${fromVC}, ${toVC})`, trace.categories.NativeLifecycle);
+        trace.write(`TransitionAnimator.init(${navigationController}, ${operation}, ${fromVC}, ${toVC})`, trace.categories.NativeLifecycle);
         var impl = <TransitionAnimator>TransitionAnimator.new();
         impl._navigationController = navigationController;
         impl._operation = operation;
@@ -295,49 +295,47 @@ class TransitionAnimator extends NSObject implements UIViewControllerAnimatedTra
     public animateTransition(transitionContext: UIViewControllerContextTransitioning): void {
         trace.write(`TransitionAnimator.animateTransition(${transitionContext})`, trace.categories.NativeLifecycle);
 
-        var containerView = (<any>transitionContext).performSelector("containerView");
-        var fromView = this._fromVC.view;
-        var toView = this._toVC.view;
+        let containerView =( <any>transitionContext).performSelector("containerView");
+        let fromView = this._fromVC.view;
+        let toView = this._toVC.view;
+        let duration = this.transitionDuration(transitionContext);
 
-        fromView.alpha = 1.0;
+        let rotateY = this._operation === UINavigationControllerOperation.UINavigationControllerOperationPush ? Math.PI : -Math.PI;
+
+        // Set the from values.
         toView.alpha = 0.0;
-        var screenWidth = platform.screen.mainScreen.widthDIPs;
+        toView.layer.transform = CATransform3DMakeRotation(rotateY, 0.0, 1.0, 0.0);
+
+        fromView.layer.transform = CATransform3DIdentity;
+        fromView.alpha = 1.0;
+
+        // Insert the toView in the visual tree.
         switch (this._operation) {
             case UINavigationControllerOperation.UINavigationControllerOperationPush:
-                fromView.transform = CGAffineTransformIdentity;
-                toView.transform = CGAffineTransformMakeTranslation(screenWidth, 0);
                 containerView.insertSubviewAboveSubview(toView, fromView);
                 break;
             case UINavigationControllerOperation.UINavigationControllerOperationPop:
-                fromView.transform = CGAffineTransformIdentity;
-                toView.transform = CGAffineTransformMakeTranslation(-screenWidth, 0);
                 containerView.insertSubviewBelowSubview(toView, fromView);
                 break;
         }
-
-        var duration = this.transitionDuration(transitionContext);
-        UIView.animateWithDurationAnimationsCompletion(duration,
+    
+        // Animate the to values together simultaneously.
+        UIView.animateKeyframesWithDurationDelayOptionsAnimationsCompletion(duration, 0,
+            UIViewKeyframeAnimationOptions.UIViewKeyframeAnimationOptionBeginFromCurrentState,
             () => {
-                UIView.setAnimationCurve(UIViewAnimationCurve.UIViewAnimationCurveEaseOut);
-                
-                this._fromVC.view.alpha = 0.0;
-                this._toVC.view.alpha = 1.0;
-
-                switch (this._operation) {
-                    case UINavigationControllerOperation.UINavigationControllerOperationPush:
-                        fromView.transform = CGAffineTransformMakeTranslation(-screenWidth, 0);
-                        toView.transform = CGAffineTransformIdentity;
-                        break;
-                    case UINavigationControllerOperation.UINavigationControllerOperationPop:
-                        fromView.transform = CGAffineTransformMakeTranslation(screenWidth, 0);
-                        toView.transform = CGAffineTransformIdentity;
-                        break;
-                }
+                UIView.addKeyframeWithRelativeStartTimeRelativeDurationAnimations(0, 1, () => {
+                    toView.layer.transform = CATransform3DIdentity;
+                    fromView.layer.transform = CATransform3DMakeRotation(-rotateY, 0.0, 1.0, 0.0);
+                });
+                UIView.addKeyframeWithRelativeStartTimeRelativeDurationAnimations(0.5, 0.5, () => {
+                    toView.alpha = 1.0;
+                    fromView.alpha = 0.0;
+                });
             },
-            () => {
-                (<any>transitionContext).performSelectorWithObject("completeTransition:", true);
+            (finished: boolean) => {
+                (<any>transitionContext).performSelectorWithObject("completeTransition:", finished);
             }
-        ); 
+        );
     }
 
     public transitionDuration(transitionContext: UIViewControllerContextTransitioning): number {

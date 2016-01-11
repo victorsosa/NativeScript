@@ -83,64 +83,113 @@ var PageFragmentBody = (<any>android.app.Fragment).extend({
     },    
     
     onCreateAnimator: function (transit: number, enter: boolean, nextAnim: number): android.animation.Animator {
-        var nativeAnimatorsArray = java.lang.reflect.Array.newInstance(android.animation.Animator.class, 2);
+        var objectAnimators;
+        var values;
+        var animator: android.animation.ObjectAnimator;
+        var accelerateDecelerateInterpolator = new android.view.animation.AccelerateDecelerateInterpolator();
+        var cardFlipTimeFull = 5000;
+
+        switch (nextAnim) {
+            case -10: // Enter / card_flip_right_in
+                objectAnimators = java.lang.reflect.Array.newInstance(android.animation.Animator.class, 3);
+
+                values = java.lang.reflect.Array.newInstance(floatType, 2);
+                values[0] = 1.0;
+                values[1] = 0.0;
+                animator = android.animation.ObjectAnimator.ofFloat(null, "alpha", values);
+                animator.setDuration(0);
+                objectAnimators[0] = animator;
+
+                values = java.lang.reflect.Array.newInstance(floatType, 2);
+                values[0] = 180.0;
+                values[1] = 0.0;
+                animator = android.animation.ObjectAnimator.ofFloat(null, "rotationY", values);
+                animator.setInterpolator(accelerateDecelerateInterpolator);
+                animator.setDuration(cardFlipTimeFull);
+                objectAnimators[1] = animator;
+
+                values = java.lang.reflect.Array.newInstance(floatType, 2);
+                values[0] = 0.0;
+                values[1] = 1.0;
+                animator = android.animation.ObjectAnimator.ofFloat(null, "alpha", values);
+                animator.setStartDelay(cardFlipTimeFull / 2);
+                animator.setDuration(1);
+                objectAnimators[2] = animator;
+
+                break;
+            case -20: // Exit / card_flip_right_out
+                objectAnimators = java.lang.reflect.Array.newInstance(android.animation.Animator.class, 2);
+
+                values = java.lang.reflect.Array.newInstance(floatType, 2);
+                values[0] = 0.0;
+                values[1] = -180.0;
+                animator = android.animation.ObjectAnimator.ofFloat(null, "rotationY", values);
+                animator.setInterpolator(accelerateDecelerateInterpolator);
+                animator.setDuration(cardFlipTimeFull);
+                objectAnimators[0] = animator;
+
+                values = java.lang.reflect.Array.newInstance(floatType, 2);
+                values[0] = 1.0;
+                values[1] = 0.0;
+                animator = android.animation.ObjectAnimator.ofFloat(null, "alpha", values);
+                animator.setStartDelay(cardFlipTimeFull / 2);
+                animator.setDuration(1);
+                objectAnimators[1] = animator;
+
+                break;
+            case -30: // Pop Enter / card_flip_left_in
+                objectAnimators = java.lang.reflect.Array.newInstance(android.animation.Animator.class, 3);
+
+                values = java.lang.reflect.Array.newInstance(floatType, 2);
+                values[0] = 1.0;
+                values[1] = 0.0;
+                animator = android.animation.ObjectAnimator.ofFloat(null, "alpha", values);
+                animator.setDuration(0);
+                objectAnimators[0] = animator;
+
+                values = java.lang.reflect.Array.newInstance(floatType, 2);
+                values[0] = -180.0;
+                values[1] = 0.0;
+                animator = android.animation.ObjectAnimator.ofFloat(null, "rotationY", values);
+                animator.setInterpolator(accelerateDecelerateInterpolator);
+                animator.setDuration(cardFlipTimeFull);
+                objectAnimators[1] = animator;
+
+                values = java.lang.reflect.Array.newInstance(floatType, 2);
+                values[0] = 0.0;
+                values[1] = 1.0;
+                animator = android.animation.ObjectAnimator.ofFloat(null, "alpha", values);
+                animator.setStartDelay(cardFlipTimeFull / 2);
+                animator.setDuration(1);
+                objectAnimators[2] = animator;
+
+                break;
+            case -40: // Pop Exit / card_flip_left_out
+                objectAnimators = java.lang.reflect.Array.newInstance(android.animation.Animator.class, 2);
+
+                values = java.lang.reflect.Array.newInstance(floatType, 2);
+                values[0] = 0.0;
+                values[1] = 180.0;
+                animator = android.animation.ObjectAnimator.ofFloat(null, "rotationY", values);
+                animator.setInterpolator(accelerateDecelerateInterpolator);
+                animator.setDuration(cardFlipTimeFull);
+                objectAnimators[0] = animator;
+
+                values = java.lang.reflect.Array.newInstance(floatType, 2);
+                values[0] = 1.0;
+                values[1] = 0.0;
+                animator = android.animation.ObjectAnimator.ofFloat(null, "alpha", values);
+                animator.setStartDelay(cardFlipTimeFull / 2);
+                animator.setDuration(1);
+                objectAnimators[1] = animator;
+
+                break;
+            default:
+                throw new Error("Invalid transition animation ID.");
+        }
         
-        // TranslateX
-        var translationXValues = java.lang.reflect.Array.newInstance(floatType, 2);
-        var screenWidth = platform.screen.mainScreen.widthPixels;
-        switch (nextAnim) {
-            case -10: // Enter
-                translationXValues[0] = screenWidth;
-                translationXValues[1] = 0;
-                break;
-            case -20: // Exit
-                translationXValues[0] = 0;
-                translationXValues[1] = -screenWidth;
-                break;
-            case -30: // Pop Enter
-                translationXValues[0] = -screenWidth;
-                translationXValues[1] = 0;
-                break;
-            case -40: // Pop Exit
-                translationXValues[0] = 0;
-                translationXValues[1] = screenWidth;
-                break;
-            default:
-                throw new Error("Invalid transition animation ID.");
-        }
-        var translateXAnimator = android.animation.ObjectAnimator.ofFloat(this, "translationX", translationXValues);
-        translateXAnimator.setDuration(5000);//5 seconds
-        translateXAnimator.setInterpolator(new android.view.animation.DecelerateInterpolator(1.5));
-        nativeAnimatorsArray[0] = translateXAnimator;
-
-        // Alpha
-        var alphaValues = java.lang.reflect.Array.newInstance(floatType, 2);
-        switch (nextAnim) {
-            case -10: // Enter
-                alphaValues[0] = 0;
-                alphaValues[1] = 1;
-                break;
-            case -20: // Exit
-                alphaValues[0] = 1;
-                alphaValues[1] = 0;
-                break;
-            case -30: // Pop Enter
-                alphaValues[0] = 0;
-                alphaValues[1] = 1;
-                break;
-            case -40: // Pop Exit
-                alphaValues[0] = 1;
-                alphaValues[1] = 0;
-                break;
-            default:
-                throw new Error("Invalid transition animation ID.");
-        }
-        var alphaAnimator = android.animation.ObjectAnimator.ofFloat(this, "alpha", alphaValues);
-        alphaAnimator.setDuration(5000);//5 seconds
-        alphaAnimator.setInterpolator(new android.view.animation.DecelerateInterpolator(1.5));
-        nativeAnimatorsArray[1] = alphaAnimator;
-
         var page = (<definition.BackstackEntry>this.entry).resolvedPage;
+        var animatorSet = new android.animation.AnimatorSet();
         var listener = new android.animation.Animator.AnimatorListener({
             onAnimationStart: function (animator: android.animation.Animator): void {
                 trace.write(`${this.toString()} transitionAnimatorListener.onAnimationStart(${animator})`, trace.categories.Animation);
@@ -164,10 +213,8 @@ var PageFragmentBody = (<any>android.app.Fragment).extend({
             }
         });
 
-        var animatorSet = new android.animation.AnimatorSet();
         animatorSet.addListener(listener);
-        animatorSet.playTogether(nativeAnimatorsArray);
-        animatorSet.setupStartValues();
+        animatorSet.playTogether(objectAnimators);
 
         trace.write(`PageFragmentBody.onCreateAnimator(${transit}, ${enter}, ${nextAnim}): ${animatorSet}`, trace.categories.NativeLifecycle);
         return animatorSet;
