@@ -107,13 +107,15 @@ export class Frame extends frameCommon.Frame {
         this._pushViewControllerAnimated(viewController, animated);
     }
 
-    private _pushViewControllerAnimated(viewController: UIViewController, animated: boolean) {
-        trace.write(`${this._ios.controller}.pushViewControllerAnimated(${viewController}, ${animated}); navDepth: ${navDepth}`, trace.categories.Navigation);
-        this._ios.controller.pushViewControllerAnimated(viewController, animated);
+    private _pushViewControllerAnimated(controller: UIViewController, animated: boolean) {
+        this._ios.controller.pushViewControllerAnimated(controller, animated);
+    }
+
+    private _popToViewControllerAnimated(controller: UIViewController, animated: boolean) {
+        this._ios.controller.popToViewControllerAnimated(controller, animated);
     }
 
     private _setViewControllersAnimated(newControllers: NSArray, animated: boolean) {
-        trace.write(`${this._ios.controller}.setViewControllersAnimated(${newControllers}, ${animated}); navDepth: ${navDepth}`, trace.categories.Navigation);
         this._ios.controller.setViewControllersAnimated(newControllers, animated);
     }
 
@@ -125,8 +127,7 @@ export class Frame extends frameCommon.Frame {
             var animated = this._getIsAnimatedNavigation(backstackEntry.entry);
 
             this._updateActionBar(backstackEntry.resolvedPage);
-            trace.write(`${this._ios.controller}.popToViewControllerAnimated(${controller}, ${animated}); navDepth: ${navDepth}`, trace.categories.Navigation);
-            this._ios.controller.popToViewControllerAnimated(controller, animated);
+            this._popToViewControllerAnimated(controller, animated);
         }
     }
 
@@ -273,75 +274,75 @@ export class Frame extends frameCommon.Frame {
     }
 }
 
-class TransitionAnimator extends NSObject implements UIViewControllerAnimatedTransitioning {
-    public static ObjCProtocols = [UIViewControllerAnimatedTransitioning];
+//class TransitionAnimator extends NSObject implements UIViewControllerAnimatedTransitioning {
+//    public static ObjCProtocols = [UIViewControllerAnimatedTransitioning];
 
-    private _navigationController: UINavigationController;
-    private _operation: number;
-    private _fromVC: UIViewController;
-    private _toVC: UIViewController
+//    private _navigationController: UINavigationController;
+//    private _operation: number;
+//    private _fromVC: UIViewController;
+//    private _toVC: UIViewController
 
-    public static init(navigationController: UINavigationController, operation: number, fromVC: UIViewController, toVC: UIViewController): TransitionAnimator {
-        var operationType: string;
-        trace.write(`TransitionAnimator.init(${navigationController}, ${operation}, ${fromVC}, ${toVC})`, trace.categories.NativeLifecycle);
-        var impl = <TransitionAnimator>TransitionAnimator.new();
-        impl._navigationController = navigationController;
-        impl._operation = operation;
-        impl._fromVC = fromVC;
-        impl._toVC = toVC;
-        return impl;
-}
+//    public static init(navigationController: UINavigationController, operation: number, fromVC: UIViewController, toVC: UIViewController): TransitionAnimator {
+//        var operationType: string;
+//        trace.write(`TransitionAnimator.init(${navigationController}, ${operation}, ${fromVC}, ${toVC})`, trace.categories.NativeLifecycle);
+//        var impl = <TransitionAnimator>TransitionAnimator.new();
+//        impl._navigationController = navigationController;
+//        impl._operation = operation;
+//        impl._fromVC = fromVC;
+//        impl._toVC = toVC;
+//        return impl;
+//}
 
-    public animateTransition(transitionContext: UIViewControllerContextTransitioning): void {
-        trace.write(`TransitionAnimator.animateTransition(${transitionContext})`, trace.categories.NativeLifecycle);
+//    public animateTransition(transitionContext: UIViewControllerContextTransitioning): void {
+//        trace.write(`TransitionAnimator.animateTransition(${transitionContext})`, trace.categories.NativeLifecycle);
 
-        let containerView =( <any>transitionContext).performSelector("containerView");
-        let fromView = this._fromVC.view;
-        let toView = this._toVC.view;
-        let duration = this.transitionDuration(transitionContext);
+//        let containerView =( <any>transitionContext).performSelector("containerView");
+//        let fromView = this._fromVC.view;
+//        let toView = this._toVC.view;
+//        let duration = this.transitionDuration(transitionContext);
 
-        let rotateY = this._operation === UINavigationControllerOperation.UINavigationControllerOperationPush ? Math.PI : -Math.PI;
+//        let rotateY = this._operation === UINavigationControllerOperation.UINavigationControllerOperationPush ? Math.PI : -Math.PI;
 
-        // Set the from values.
-        toView.alpha = 0.0;
-        toView.layer.transform = CATransform3DMakeRotation(rotateY, 0.0, 1.0, 0.0);
+//        // Set the from values.
+//        toView.alpha = 0.0;
+//        toView.layer.transform = CATransform3DMakeRotation(rotateY, 0.0, 1.0, 0.0);
 
-        fromView.layer.transform = CATransform3DIdentity;
-        fromView.alpha = 1.0;
+//        fromView.layer.transform = CATransform3DIdentity;
+//        fromView.alpha = 1.0;
 
-        // Insert the toView in the visual tree.
-        switch (this._operation) {
-            case UINavigationControllerOperation.UINavigationControllerOperationPush:
-                containerView.insertSubviewAboveSubview(toView, fromView);
-                break;
-            case UINavigationControllerOperation.UINavigationControllerOperationPop:
-                containerView.insertSubviewBelowSubview(toView, fromView);
-                break;
-        }
+//        // Insert the toView in the visual tree.
+//        switch (this._operation) {
+//            case UINavigationControllerOperation.UINavigationControllerOperationPush:
+//                containerView.insertSubviewAboveSubview(toView, fromView);
+//                break;
+//            case UINavigationControllerOperation.UINavigationControllerOperationPop:
+//                containerView.insertSubviewBelowSubview(toView, fromView);
+//                break;
+//        }
     
-        // Animate the to values together simultaneously.
-        UIView.animateKeyframesWithDurationDelayOptionsAnimationsCompletion(duration, 0,
-            UIViewKeyframeAnimationOptions.UIViewKeyframeAnimationOptionBeginFromCurrentState,
-            () => {
-                UIView.addKeyframeWithRelativeStartTimeRelativeDurationAnimations(0, 1, () => {
-                    toView.layer.transform = CATransform3DIdentity;
-                    fromView.layer.transform = CATransform3DMakeRotation(-rotateY, 0.0, 1.0, 0.0);
-                });
-                UIView.addKeyframeWithRelativeStartTimeRelativeDurationAnimations(0.5, 0.5, () => {
-                    toView.alpha = 1.0;
-                    fromView.alpha = 0.0;
-                });
-            },
-            (finished: boolean) => {
-                (<any>transitionContext).performSelectorWithObject("completeTransition:", finished);
-            }
-        );
-    }
+//        // Animate the to values together simultaneously.
+//        UIView.animateKeyframesWithDurationDelayOptionsAnimationsCompletion(duration, 0,
+//            UIViewKeyframeAnimationOptions.UIViewKeyframeAnimationOptionBeginFromCurrentState,
+//            () => {
+//                UIView.addKeyframeWithRelativeStartTimeRelativeDurationAnimations(0, 1, () => {
+//                    toView.layer.transform = CATransform3DIdentity;
+//                    fromView.layer.transform = CATransform3DMakeRotation(-rotateY, 0.0, 1.0, 0.0);
+//                });
+//                UIView.addKeyframeWithRelativeStartTimeRelativeDurationAnimations(0.5, 0.5, () => {
+//                    toView.alpha = 1.0;
+//                    fromView.alpha = 0.0;
+//                });
+//            },
+//            (finished: boolean) => {
+//                (<any>transitionContext).performSelectorWithObject("completeTransition:", finished);
+//            }
+//        );
+//    }
 
-    public transitionDuration(transitionContext: UIViewControllerContextTransitioning): number {
-        return 5;//seconds
-    }
-}
+//    public transitionDuration(transitionContext: UIViewControllerContextTransitioning): number {
+//        return 5;//seconds
+//    }
+//}
 
 class UINavigationControllerImpl extends UINavigationController implements UINavigationControllerDelegate {
     public static ObjCProtocols = [UINavigationControllerDelegate];
@@ -471,14 +472,56 @@ class UINavigationControllerImpl extends UINavigationController implements UINav
         return UIInterfaceOrientationMask.UIInterfaceOrientationMaskAll;
     }
 
-    public navigationControllerAnimationControllerForOperationFromViewControllerToViewController(navigationController: UINavigationController, operation: number, fromVC: UIViewController, toVC: UIViewController): any {
-        var transitionAnimator: TransitionAnimator;
-        if (operation !== UINavigationControllerOperation.UINavigationControllerOperationNone) {
-            transitionAnimator = TransitionAnimator.init(navigationController, operation, fromVC, toVC);
-        }
-        trace.write(`UINavigationControllerImpl.navigationControllerAnimationControllerForOperationFromViewControllerToViewController(${operation}, ${fromVC}, ${toVC}): ${transitionAnimator})`, trace.categories.NativeLifecycle);
-        return transitionAnimator;
+    public pushViewControllerAnimated(controller: UIViewController, animated: boolean): void {
+        trace.write(`UINavigationControllerImpl.pushViewControllerAnimated(${controller}, ${animated})`, trace.categories.NativeLifecycle);
+        UIView.animateWithDurationAnimations(0.35, () => {
+            UIView.setAnimationCurve(UIViewAnimationCurve.UIViewAnimationCurveEaseInOut);
+            super.pushViewControllerAnimated(controller, false);
+            //UIView.setAnimationTransitionForViewCache(UIViewAnimationTransition.UIViewAnimationTransitionFlipFromRight, this.view, false);
+            UIView.setAnimationTransitionForViewCache(UIViewAnimationTransition.UIViewAnimationTransitionCurlUp, this.view, false);
+        });
     }
+
+    public setViewControllersAnimated(controllers: NSArray, animated: boolean): void {
+        trace.write(`UINavigationControllerImpl.setViewControllersAnimated(${controllers}, ${animated})`, trace.categories.NativeLifecycle);
+        UIView.animateWithDurationAnimations(0.35, () => {
+            UIView.setAnimationCurve(UIViewAnimationCurve.UIViewAnimationCurveEaseInOut);
+            super.setViewControllersAnimated(controllers, animated);
+            //UIView.setAnimationTransitionForViewCache(UIViewAnimationTransition.UIViewAnimationTransitionFlipFromRight, this.view, false);
+            UIView.setAnimationTransitionForViewCache(UIViewAnimationTransition.UIViewAnimationTransitionCurlUp, this.view, false);
+        });
+    }
+
+    public popViewControllerAnimated(animated: boolean): UIViewController {
+        trace.write(`UINavigationControllerImpl.popViewControllerAnimated(${animated})`, trace.categories.NativeLifecycle);
+        UIView.animateWithDurationAnimations(0.35, () => {
+            UIView.setAnimationCurve(UIViewAnimationCurve.UIViewAnimationCurveEaseInOut);
+            super.popViewControllerAnimated(false);
+            //UIView.setAnimationTransitionForViewCache(UIViewAnimationTransition.UIViewAnimationTransitionFlipFromLeft, this.view, false);
+            UIView.setAnimationTransitionForViewCache(UIViewAnimationTransition.UIViewAnimationTransitionCurlDown, this.view, false);
+        });
+        return null;
+    }
+
+    public popToViewControllerAnimated(controller: UIViewController, animated: boolean): NSArray {
+        trace.write(`UINavigationControllerImpl.popToViewControllerAnimated(${controller}, ${animated})`, trace.categories.NativeLifecycle);
+        UIView.animateWithDurationAnimations(0.35, () => {
+            UIView.setAnimationCurve(UIViewAnimationCurve.UIViewAnimationCurveEaseInOut);
+            super.popToViewControllerAnimated(controller, false);
+            //UIView.setAnimationTransitionForViewCache(UIViewAnimationTransition.UIViewAnimationTransitionFlipFromLeft, this.view, false);
+            UIView.setAnimationTransitionForViewCache(UIViewAnimationTransition.UIViewAnimationTransitionCurlDown, this.view, false);
+        });
+        return null;
+    }
+
+    //public navigationControllerAnimationControllerForOperationFromViewControllerToViewController(navigationController: UINavigationController, operation: number, fromVC: UIViewController, toVC: UIViewController): any {
+    //    var transitionAnimator: TransitionAnimator;
+    //    if (operation !== UINavigationControllerOperation.UINavigationControllerOperationNone) {
+    //        transitionAnimator = TransitionAnimator.init(navigationController, operation, fromVC, toVC);
+    //    }
+    //    trace.write(`UINavigationControllerImpl.navigationControllerAnimationControllerForOperationFromViewControllerToViewController(${operation}, ${fromVC}, ${toVC}): ${transitionAnimator})`, trace.categories.NativeLifecycle);
+    //    return transitionAnimator;
+    //}
 }
 
 /* tslint:disable */

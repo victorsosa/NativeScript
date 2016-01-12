@@ -19,7 +19,8 @@ var ANDROID_FRAME = "android_frame";
 var BACKSTACK_TAG = "_backstackTag";
 var NAV_DEPTH = "_navDepth";
 var CLEARING_HISTORY = "_clearingHistory";
-var EXIT_ANIMATION = "_exitAnimation";
+//var EXIT_ANIMATION = "_exitAnimation";
+var sdkVersion = parseInt(platform.device.sdkVersion);
 var activityInitialized = false;
 
 var navDepth = -1;
@@ -82,143 +83,143 @@ var PageFragmentBody = (<any>android.app.Fragment).extend({
         utils.GC();
     },    
     
-    onCreateAnimator: function (transit: number, enter: boolean, nextAnim: number): android.animation.Animator {
-        var objectAnimators;
-        var values;
-        var animator: android.animation.ObjectAnimator;
-        var accelerateDecelerateInterpolator = new android.view.animation.AccelerateDecelerateInterpolator();
-        var cardFlipTimeFull = 5000;
+    //onCreateAnimator: function (transit: number, enter: boolean, nextAnim: number): android.animation.Animator {
+    //    var objectAnimators;
+    //    var values;
+    //    var animator: android.animation.ObjectAnimator;
+    //    var accelerateDecelerateInterpolator = new android.view.animation.AccelerateDecelerateInterpolator();
+    //    var cardFlipTimeFull = 5000;
 
-        switch (nextAnim) {
-            case -10: // Enter / card_flip_right_in
-                objectAnimators = java.lang.reflect.Array.newInstance(android.animation.Animator.class, 3);
+    //    switch (nextAnim) {
+    //        case -10: // Enter / card_flip_right_in
+    //            objectAnimators = java.lang.reflect.Array.newInstance(android.animation.Animator.class, 3);
 
-                values = java.lang.reflect.Array.newInstance(floatType, 2);
-                values[0] = 1.0;
-                values[1] = 0.0;
-                animator = android.animation.ObjectAnimator.ofFloat(null, "alpha", values);
-                animator.setDuration(0);
-                objectAnimators[0] = animator;
+    //            values = java.lang.reflect.Array.newInstance(floatType, 2);
+    //            values[0] = 1.0;
+    //            values[1] = 0.0;
+    //            animator = android.animation.ObjectAnimator.ofFloat(null, "alpha", values);
+    //            animator.setDuration(0);
+    //            objectAnimators[0] = animator;
 
-                values = java.lang.reflect.Array.newInstance(floatType, 2);
-                values[0] = 180.0;
-                values[1] = 0.0;
-                animator = android.animation.ObjectAnimator.ofFloat(null, "rotationY", values);
-                animator.setInterpolator(accelerateDecelerateInterpolator);
-                animator.setDuration(cardFlipTimeFull);
-                objectAnimators[1] = animator;
+    //            values = java.lang.reflect.Array.newInstance(floatType, 2);
+    //            values[0] = 180.0;
+    //            values[1] = 0.0;
+    //            animator = android.animation.ObjectAnimator.ofFloat(null, "rotationY", values);
+    //            animator.setInterpolator(accelerateDecelerateInterpolator);
+    //            animator.setDuration(cardFlipTimeFull);
+    //            objectAnimators[1] = animator;
 
-                values = java.lang.reflect.Array.newInstance(floatType, 2);
-                values[0] = 0.0;
-                values[1] = 1.0;
-                animator = android.animation.ObjectAnimator.ofFloat(null, "alpha", values);
-                animator.setStartDelay(cardFlipTimeFull / 2);
-                animator.setDuration(1);
-                objectAnimators[2] = animator;
+    //            values = java.lang.reflect.Array.newInstance(floatType, 2);
+    //            values[0] = 0.0;
+    //            values[1] = 1.0;
+    //            animator = android.animation.ObjectAnimator.ofFloat(null, "alpha", values);
+    //            animator.setStartDelay(cardFlipTimeFull / 2);
+    //            animator.setDuration(1);
+    //            objectAnimators[2] = animator;
 
-                break;
-            case -20: // Exit / card_flip_right_out
-                objectAnimators = java.lang.reflect.Array.newInstance(android.animation.Animator.class, 2);
+    //            break;
+    //        case -20: // Exit / card_flip_right_out
+    //            objectAnimators = java.lang.reflect.Array.newInstance(android.animation.Animator.class, 2);
 
-                values = java.lang.reflect.Array.newInstance(floatType, 2);
-                values[0] = 0.0;
-                values[1] = -180.0;
-                animator = android.animation.ObjectAnimator.ofFloat(null, "rotationY", values);
-                animator.setInterpolator(accelerateDecelerateInterpolator);
-                animator.setDuration(cardFlipTimeFull);
-                objectAnimators[0] = animator;
+    //            values = java.lang.reflect.Array.newInstance(floatType, 2);
+    //            values[0] = 0.0;
+    //            values[1] = -180.0;
+    //            animator = android.animation.ObjectAnimator.ofFloat(null, "rotationY", values);
+    //            animator.setInterpolator(accelerateDecelerateInterpolator);
+    //            animator.setDuration(cardFlipTimeFull);
+    //            objectAnimators[0] = animator;
 
-                values = java.lang.reflect.Array.newInstance(floatType, 2);
-                values[0] = 1.0;
-                values[1] = 0.0;
-                animator = android.animation.ObjectAnimator.ofFloat(null, "alpha", values);
-                animator.setStartDelay(cardFlipTimeFull / 2);
-                animator.setDuration(1);
-                objectAnimators[1] = animator;
+    //            values = java.lang.reflect.Array.newInstance(floatType, 2);
+    //            values[0] = 1.0;
+    //            values[1] = 0.0;
+    //            animator = android.animation.ObjectAnimator.ofFloat(null, "alpha", values);
+    //            animator.setStartDelay(cardFlipTimeFull / 2);
+    //            animator.setDuration(1);
+    //            objectAnimators[1] = animator;
 
-                break;
-            case -30: // Pop Enter / card_flip_left_in
-                objectAnimators = java.lang.reflect.Array.newInstance(android.animation.Animator.class, 3);
+    //            break;
+    //        case -30: // Pop Enter / card_flip_left_in
+    //            objectAnimators = java.lang.reflect.Array.newInstance(android.animation.Animator.class, 3);
 
-                values = java.lang.reflect.Array.newInstance(floatType, 2);
-                values[0] = 1.0;
-                values[1] = 0.0;
-                animator = android.animation.ObjectAnimator.ofFloat(null, "alpha", values);
-                animator.setDuration(0);
-                objectAnimators[0] = animator;
+    //            values = java.lang.reflect.Array.newInstance(floatType, 2);
+    //            values[0] = 1.0;
+    //            values[1] = 0.0;
+    //            animator = android.animation.ObjectAnimator.ofFloat(null, "alpha", values);
+    //            animator.setDuration(0);
+    //            objectAnimators[0] = animator;
 
-                values = java.lang.reflect.Array.newInstance(floatType, 2);
-                values[0] = -180.0;
-                values[1] = 0.0;
-                animator = android.animation.ObjectAnimator.ofFloat(null, "rotationY", values);
-                animator.setInterpolator(accelerateDecelerateInterpolator);
-                animator.setDuration(cardFlipTimeFull);
-                objectAnimators[1] = animator;
+    //            values = java.lang.reflect.Array.newInstance(floatType, 2);
+    //            values[0] = -180.0;
+    //            values[1] = 0.0;
+    //            animator = android.animation.ObjectAnimator.ofFloat(null, "rotationY", values);
+    //            animator.setInterpolator(accelerateDecelerateInterpolator);
+    //            animator.setDuration(cardFlipTimeFull);
+    //            objectAnimators[1] = animator;
 
-                values = java.lang.reflect.Array.newInstance(floatType, 2);
-                values[0] = 0.0;
-                values[1] = 1.0;
-                animator = android.animation.ObjectAnimator.ofFloat(null, "alpha", values);
-                animator.setStartDelay(cardFlipTimeFull / 2);
-                animator.setDuration(1);
-                objectAnimators[2] = animator;
+    //            values = java.lang.reflect.Array.newInstance(floatType, 2);
+    //            values[0] = 0.0;
+    //            values[1] = 1.0;
+    //            animator = android.animation.ObjectAnimator.ofFloat(null, "alpha", values);
+    //            animator.setStartDelay(cardFlipTimeFull / 2);
+    //            animator.setDuration(1);
+    //            objectAnimators[2] = animator;
 
-                break;
-            case -40: // Pop Exit / card_flip_left_out
-                objectAnimators = java.lang.reflect.Array.newInstance(android.animation.Animator.class, 2);
+    //            break;
+    //        case -40: // Pop Exit / card_flip_left_out
+    //            objectAnimators = java.lang.reflect.Array.newInstance(android.animation.Animator.class, 2);
 
-                values = java.lang.reflect.Array.newInstance(floatType, 2);
-                values[0] = 0.0;
-                values[1] = 180.0;
-                animator = android.animation.ObjectAnimator.ofFloat(null, "rotationY", values);
-                animator.setInterpolator(accelerateDecelerateInterpolator);
-                animator.setDuration(cardFlipTimeFull);
-                objectAnimators[0] = animator;
+    //            values = java.lang.reflect.Array.newInstance(floatType, 2);
+    //            values[0] = 0.0;
+    //            values[1] = 180.0;
+    //            animator = android.animation.ObjectAnimator.ofFloat(null, "rotationY", values);
+    //            animator.setInterpolator(accelerateDecelerateInterpolator);
+    //            animator.setDuration(cardFlipTimeFull);
+    //            objectAnimators[0] = animator;
 
-                values = java.lang.reflect.Array.newInstance(floatType, 2);
-                values[0] = 1.0;
-                values[1] = 0.0;
-                animator = android.animation.ObjectAnimator.ofFloat(null, "alpha", values);
-                animator.setStartDelay(cardFlipTimeFull / 2);
-                animator.setDuration(1);
-                objectAnimators[1] = animator;
+    //            values = java.lang.reflect.Array.newInstance(floatType, 2);
+    //            values[0] = 1.0;
+    //            values[1] = 0.0;
+    //            animator = android.animation.ObjectAnimator.ofFloat(null, "alpha", values);
+    //            animator.setStartDelay(cardFlipTimeFull / 2);
+    //            animator.setDuration(1);
+    //            objectAnimators[1] = animator;
 
-                break;
-            default:
-                throw new Error("Invalid transition animation ID.");
-        }
+    //            break;
+    //        default:
+    //            throw new Error("Invalid transition animation ID.");
+    //    }
         
-        var page = (<definition.BackstackEntry>this.entry).resolvedPage;
-        var animatorSet = new android.animation.AnimatorSet();
-        var listener = new android.animation.Animator.AnimatorListener({
-            onAnimationStart: function (animator: android.animation.Animator): void {
-                trace.write(`${this.toString()} transitionAnimatorListener.onAnimationStart(${animator})`, trace.categories.Animation);
-            },
-            onAnimationRepeat: function (animator: android.animation.Animator): void {
-                trace.write(`${this.toString()} transitionAnimatorListener.onAnimationRepeat(${animator})`, trace.categories.Animation);
-            },
-            onAnimationEnd: function (animator: android.animation.Animator): void {
-                trace.write(`${this.toString()} transitionAnimatorListener.onAnimationEnd(${animator})`, trace.categories.Animation);
-                if (nextAnim === -20 || nextAnim === -40) {
-                    if (page && page.frame) {
-                        trace.write(`${this.toString()} exit animation finished, removing ${page} from visual tree.`, trace.categories.NativeLifecycle);
-                        page.frame._removeView(page);
-                    }
-                }
-                animatorSet.removeAllListeners();
-                listener = undefined;
-            },
-            onAnimationCancel: function (animator: android.animation.Animator): void {
-                trace.write(`${this.toString()} transitionAnimatorListener.onAnimationCancel(${animator})`, trace.categories.Animation);
-            }
-        });
+    //    var page = (<definition.BackstackEntry>this.entry).resolvedPage;
+    //    var animatorSet = new android.animation.AnimatorSet();
+    //    var listener = new android.animation.Animator.AnimatorListener({
+    //        onAnimationStart: function (animator: android.animation.Animator): void {
+    //            trace.write(`${this.toString()} transitionAnimatorListener.onAnimationStart(${animator})`, trace.categories.Animation);
+    //        },
+    //        onAnimationRepeat: function (animator: android.animation.Animator): void {
+    //            trace.write(`${this.toString()} transitionAnimatorListener.onAnimationRepeat(${animator})`, trace.categories.Animation);
+    //        },
+    //        onAnimationEnd: function (animator: android.animation.Animator): void {
+    //            trace.write(`${this.toString()} transitionAnimatorListener.onAnimationEnd(${animator})`, trace.categories.Animation);
+    //            if (nextAnim === -20 || nextAnim === -40) {
+    //                if (page && page.frame) {
+    //                    trace.write(`${this.toString()} exit animation finished, removing ${page} from visual tree.`, trace.categories.NativeLifecycle);
+    //                    page.frame._removeView(page);
+    //                }
+    //            }
+    //            animatorSet.removeAllListeners();
+    //            listener = undefined;
+    //        },
+    //        onAnimationCancel: function (animator: android.animation.Animator): void {
+    //            trace.write(`${this.toString()} transitionAnimatorListener.onAnimationCancel(${animator})`, trace.categories.Animation);
+    //        }
+    //    });
 
-        animatorSet.addListener(listener);
-        animatorSet.playTogether(objectAnimators);
+    //    animatorSet.addListener(listener);
+    //    animatorSet.playTogether(objectAnimators);
 
-        trace.write(`PageFragmentBody.onCreateAnimator(${transit}, ${enter}, ${nextAnim}): ${animatorSet}`, trace.categories.NativeLifecycle);
-        return animatorSet;
-    }
+    //    trace.write(`PageFragmentBody.onCreateAnimator(${transit}, ${enter}, ${nextAnim}): ${animatorSet}`, trace.categories.NativeLifecycle);
+    //    return animatorSet;
+    //}
 });
 
 function onFragmentShown(fragment) {
@@ -268,10 +269,10 @@ function onFragmentHidden(fragment) {
     }
 
     var page = (<definition.BackstackEntry>fragment.entry).resolvedPage;
-    if (fragment[EXIT_ANIMATION]) {
-        trace.write(`${fragment.toString() } has been hidden, but there is exit animation to be played. Returning.`, trace.categories.NativeLifecycle);
-        return;
-    }
+    //if (fragment[EXIT_ANIMATION]) {
+    //    trace.write(`${fragment.toString() } has been hidden, but there is exit animation to be played. Returning.`, trace.categories.NativeLifecycle);
+    //    return;
+    //}
 
     if (page && page.frame) {
     // This might be a second call if the fragment is hidden and then destroyed.
@@ -362,11 +363,35 @@ export class Frame extends frameCommon.Frame {
         navDepth++;
 
         var fragmentTransaction = manager.beginTransaction();
-        fragmentTransaction.setCustomAnimations(-10, -20, -30, -40);
 
         var newFragmentTag = "fragment" + navDepth;
         var newFragment = new PageFragmentBody();
-        newFragment[EXIT_ANIMATION] = true;
+        
+        //fragmentTransaction.setCustomAnimations(-10, -20, -30, -40);
+        //newFragment[EXIT_ANIMATION] = true;
+        if (sdkVersion >= 21) {//Lollipop
+            var slideIn = new (<any>android).transition.Slide((<any>android).view.Gravity.RIGHT);
+            var slideOut = new (<any>android).transition.Slide((<any>android).view.Gravity.LEFT);
+
+            var fadeIn = new (<any>android).transition.Fade((<any>android).transition.Fade.IN);
+            var fadeOut = new (<any>android).transition.Fade((<any>android).transition.Fade.OUT);
+
+            var explode = new (<any>android).transition.Explode();
+
+            //(<any>newFragment).setEnterTransition(slideIn);
+            //(<any>newFragment).setEnterTransition(fadeIn);
+            (<any>newFragment).setEnterTransition(explode);
+
+            if (this.currentPage) {
+                var currentFragment = manager.findFragmentByTag(this.currentPage[TAG]);
+                if (currentFragment) {
+
+                    //(<any>currentFragment).setExitTransition(slideOut);
+                    //(<any>currentFragment).setExitTransition(fadeOut);
+                    (<any>currentFragment).setExitTransition(explode);
+                }
+            }
+        }
 
         newFragment.frame = this;
         newFragment.entry = backstackEntry;

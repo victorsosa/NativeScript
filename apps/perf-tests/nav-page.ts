@@ -79,7 +79,8 @@ export class NavPage extends pagesModule.Page implements definition.ControlsPage
             frameModule.topmost().navigate({
                 create: pageFactory,
                 backstackVisible: addToBackStackSwitch.checked,
-                clearHistory: clearHistorySwitch.checked
+                clearHistory: clearHistorySwitch.checked,
+                animated: true
             });
         });
         stackLayout.addChild(forwardButton);

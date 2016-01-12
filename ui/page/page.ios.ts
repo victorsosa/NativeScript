@@ -111,7 +111,7 @@ class UIViewControllerImpl extends UIViewController {
         owner._enableLoadedEvents = false;
     }
 
-    public viewWillDisappear() {
+    public viewWillDisappear(animated: boolean) {
         let owner = this._owner.get();
         if (!owner) {
             return;
@@ -121,6 +121,13 @@ class UIViewControllerImpl extends UIViewController {
         
         //https://github.com/NativeScript/NativeScript/issues/1201
         owner._viewWillDisappear = true;
+
+        //var anim = CATransition.animation();
+        //anim.duration = 5;
+        //anim.type = "cube";
+        //anim.subtype = "fromLeft";
+        //super.viewWillDisappear(animated);
+        //this.navigationController.view.layer.addAnimationForKey(anim, "an");
     }
 
     public viewDidDisappear() {
