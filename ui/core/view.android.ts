@@ -706,6 +706,10 @@ export class ViewStyler implements style.Styler {
     private static setZIndexProperty(view: View, newValue: any) {
         if (view.android.setZ) {
             view.android.setZ(newValue);
+            
+            if(view.android instanceof android.widget.Button){
+                view.android.setStateListAnimator(null);
+            }
         }
     }
 
@@ -742,6 +746,7 @@ export class ViewStyler implements style.Styler {
         style.registerHandler(style.borderWidthProperty, borderHandler);
         style.registerHandler(style.borderColorProperty, borderHandler);
         style.registerHandler(style.borderRadiusProperty, borderHandler);
+        style.registerHandler(style.clipPathProperty, borderHandler);
 
         style.registerHandler(style.nativeLayoutParamsProperty, new style.StylePropertyChangedHandler(
             ViewStyler.setNativeLayoutParamsProperty,
