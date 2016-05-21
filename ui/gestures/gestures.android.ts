@@ -29,11 +29,15 @@ export class GesturesObserver extends common.GesturesObserver {
         if (this.target) {
             this.type = type;
             this._onTargetLoaded = args => {
-                trace.write(this.target + ".target loaded. android:" + this.target._nativeView, "gestures");
+                if (trace.enabled) {
+                    trace.write(this.target + ".target loaded. android:" + this.target._nativeView, "gestures");
+                }
                 this._attach(this.target, type);
             };
             this._onTargetUnloaded = args => {
-                trace.write(this.target + ".target unloaded. android:" + this.target._nativeView, "gestures");
+                if (trace.enabled) {
+                    trace.write(this.target + ".target unloaded. android:" + this.target._nativeView, "gestures");
+                }
                 this._detach();
             };
 
@@ -61,7 +65,9 @@ export class GesturesObserver extends common.GesturesObserver {
     }
 
     private _detach() {
-        trace.write(this.target + "._detach() android:" + this.target._nativeView, "gestures");
+        if (trace.enabled) {
+            trace.write(this.target + "._detach() android:" + this.target._nativeView, "gestures");
+        }
 
         this._notifyTouch = false
         this._simpleGestureDetector = null;
@@ -73,7 +79,9 @@ export class GesturesObserver extends common.GesturesObserver {
     }
 
     private _attach(target: view.View, type: definition.GestureTypes) {
-        trace.write(this.target + "._attach() android:" + this.target._nativeView, "gestures");
+        if (trace.enabled) {
+            trace.write(this.target + "._attach() android:" + this.target._nativeView, "gestures");
+        }
         this._detach();
 
         if (type & definition.GestureTypes.tap || type & definition.GestureTypes.doubleTap || type & definition.GestureTypes.longPress) {
@@ -110,7 +118,7 @@ export class GesturesObserver extends common.GesturesObserver {
                 this._eventData = new TouchGestureEventData();
             }
 
-            this._eventData.prepare(this.target, motionEvent);          
+            this._eventData.prepare(this.target, motionEvent);
             _executeCallback(this, this._eventData);
         }
 
@@ -468,7 +476,7 @@ class CustomPanGestureDetector {
     }
 
     private trackStart(currentEvent: android.view.MotionEvent) {
-        let inital = this.getMotionEventCenter(this.lastEventCache ? this.lastEventCache : currentEvent);
+        let inital = this.getEventCoordinates(this.lastEventCache ? this.lastEventCache : currentEvent);
         this.initialX = inital.x;
         this.initialY = inital.y;
         this.isTracking = true;
@@ -478,7 +486,7 @@ class CustomPanGestureDetector {
     }
 
     private trackChange(currentEvent: android.view.MotionEvent) {
-        let current = this.getMotionEventCenter(currentEvent);
+        let current = this.getEventCoordinates(currentEvent);
         this.deltaX = current.x - this.initialX;
         this.deltaY = current.y - this.initialY;
 
@@ -486,18 +494,28 @@ class CustomPanGestureDetector {
         _executeCallback(this.observer, args);
     }
 
-    private getMotionEventCenter(event: android.view.MotionEvent): { x: number, y: number } {
-        let count = event.getPointerCount();
-        let res = { x: 0, y: 0 };
-        for (var i = 0; i < count; i++) {
-            res.x += event.getX(i);
-            res.y += event.getY(i);
+    private getEventCoordinates(event: android.view.MotionEvent): { x: number, y: number } {
+        const count = event.getPointerCount();
+        if (count === 1) {
+            return {
+                x: event.getRawX() / this.density,
+                y: event.getRawY() / this.density
+            };
         }
+        else {
+            const offX = event.getRawX() - event.getX();
+            const offY = event.getRawY() - event.getY();
+            let res = { x: 0, y: 0 };
 
-        res.x /= (count * this.density);
-        res.y /= (count * this.density);
+            for (let i = 0; i < count; i++) {
+                res.x += event.getX(i) + offX;
+                res.y += event.getY(i) + offY;
+            }
 
-        return res;
+            res.x /= (count * this.density);
+            res.y /= (count * this.density);
+            return res;
+        }
     }
 }
 
