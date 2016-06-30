@@ -589,7 +589,8 @@ function findPageForFragment(fragment: android.app.Fragment, frame: Frame) {
 }
 
 function startActivity(activity: android.app.Activity, frameId: number) {
-    var intent = new android.content.Intent(activity, (<any>com).tns.NativeScriptActivity.class);
+    // TODO: Implicitly, we will open the same activity type as the current one
+    var intent = new android.content.Intent(activity, activity.getClass());
     intent.setAction(android.content.Intent.ACTION_DEFAULT);
     intent.putExtra(INTENT_EXTRA, frameId);
 
@@ -772,10 +773,13 @@ class ActivityCallbacksImplementation implements definition.AndroidActivityCallb
 
         // We have extras when we call - new Frame().navigate();
         // savedInstanceState is used when activity is recreated.
+        // NOTE: On API 23+ we get extras on first run.
+        // Check changed - first try to get frameId from Extras if not from saveInstanceState.
         if (extras) {
             frameId = extras.getInt(INTENT_EXTRA, -1);
         }
-        else if (savedInstanceState) {
+
+        if (savedInstanceState && frameId < 0) {
             frameId = savedInstanceState.getInt(INTENT_EXTRA, -1)
         }
 

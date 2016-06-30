@@ -25,7 +25,9 @@ global.loadModule = function(name: string): any {
     if (loader) {
         return loader();
     } else {
-        return global.require(name);
+        let result = global.require(name);
+        modules.set(name, () => result);
+        return result;
     }
 }
 
@@ -99,6 +101,9 @@ if (global.__snapshot) {
 
     var fetch = require("fetch");
     global.fetch = fetch.fetch;
+    global.Headers = fetch.Headers;
+    global.Request = fetch.Request;
+    global.Response = fetch.Response;
 } else {
     registerOnGlobalContext("setTimeout", "timer");
     registerOnGlobalContext("clearTimeout", "timer");
